@@ -10,21 +10,21 @@ textures.
 The following lines of assembly are from the procedure from `.text:00642D80` to `.text:006433FE`.
 The procedure is compiled from `PCMain.cpp` and is responsible for loading the registry configuration.
 
-```
+```nasm
 .text:0064302E	mov     ecx, offset window
 .text:00643033	call    GetTextureAvaliable
 .text:00643038	cmp     eax, 13000000
 .text:0064303D	jge     short loc_643045
-.text:0064303F	mov     UseLowResTexture, edi
+.text:0064303F	mov     g_UseLowResTexture, edi
 .text:00643045
 .text:00643045 loc_643045:
 ```
 
 This can be translated to the following C style code:
 
-```
+```c
 if ( GetTextureAvaliable() < 13000000 )
-    UseLowResTexture = 1;
+    g_UseLowResTexture = true;
 ```
 
 This is the equivalent of checking for under 13MB of VRAM. However the return value of `GetTextureAvaliable()`
