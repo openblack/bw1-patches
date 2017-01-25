@@ -1,9 +1,9 @@
 ## Synopsis
 
-A collection of patches for Black & White 1 and it's expansion pack Creature Isle.
-As well as the source for creating the redistribute installer I 
+A collection of binary patches for Black & White 1 and it's expansion pack Creature Isle.
+By default the game comes packed using SECUROM, I won't go into extracting it here, the
+patches are for the unprotected binary file.
 
 ## Patch List
 
-* 
-* 
+* [Windowed Mode](patches/windowed_mode.md)
