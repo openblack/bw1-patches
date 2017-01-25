@@ -13,7 +13,7 @@ lower then that of newer hardware. It does so by checking if:
 The problem is the processor check which returns falsely on newer hardware even though the CPUs are more
 than capable of handling it.
 
-```
+```nasm
 .text:00804E60 sub_804E60 proc near
 .text:00804E60 		mov     al, bGoodCPU
 .text:00804E65      test    al, al
@@ -33,8 +33,8 @@ than capable of handling it.
 
 Can be represented as:
 
-```
-BOOL sub_804E60()
+```c
+bool sub_804E60()
 {
   return bGoodCPU && DetailIdx == 4 && bUnusedGraphicsOptionAlwaysOne;
 }
@@ -45,11 +45,13 @@ BOOL sub_804E60()
 We can ignore the processor check by nopping out the following instructions: `.text:00804E60` to `.text:00804E68`
 and `.text:00804E72` to `.text:00804E7A` this turns our function into the following:
 
-```
-BOOL sub_804E60()
+```c
+bool sub_804E60()
 {
 	return DetailIdx == 4
 }
 ```
+
+Therefore this function will always return true when the user has their detail level set to maximum and their drawing distances will be set properly.
 
 If we wanted to we could further increase drawing distance by editing values set that xref `sub_804E60`.
