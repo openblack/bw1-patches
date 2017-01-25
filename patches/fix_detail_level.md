@@ -25,7 +25,7 @@ The procedure is compiled from `PCMain.cpp` and is responsible for loading the r
 The first issue is if no detail index is set the game will try to automatically adjust to the best
 detail level it deems. The assmebly isn't easily translated but the C style syntax of how it works is so:
 
-```
+```c
 cpuSpeed = GetCPUSpeed();
 if ( cpuSpeed <= 640 )
   if ( cpuSpeed < 420 )
@@ -42,7 +42,9 @@ The next issue we have to fix is a range check on the user provided detail level
 dreaded `Custom` detail level, we don't want to accept it. The game already does a range check on the user
 provided detail level before dropping into the auto adjuster.
 
-`if ( RegistryRetrieveULong(aBWSetupRegKey, aDetailidx, &regDetailIdx) || regDetailIdx >= 7 )`
+```c
+if ( RegistryRetrieveULong("Software\\Lionhead Studios Ltd\\Black & White\\BWSetup", "detailidx", &regDetailIdx) || regDetailIdx >= 7 )
+```
 
 Detail levels higher than 4 are custom types and don't work properly.
 
