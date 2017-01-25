@@ -7,3 +7,4 @@ patches are for the unprotected binary file.
 ## Patch List
 
 * [Windowed Mode](patches/windowed_mode.md)
+* [Low Resolution Textures](patches/low_res_textures.md)
