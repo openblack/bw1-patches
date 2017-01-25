@@ -8,3 +8,4 @@ patches are for the unprotected binary file.
 
 * [Windowed Mode](patches/windowed_mode.md)
 * [Low Resolution Textures](patches/low_res_textures.md)
+* [Fixing Detail Level](patches/fix_detail_level.md)
