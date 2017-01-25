@@ -8,7 +8,7 @@ acts appropriately, but then forces fullscreen mode afterwards making the option
 The following lines of assembly are from the procedure from `.text:00642D80` to `.text:006433FE`.
 The procedure is compiled from `PCMain.cpp` and is responsible for loading the registry configuration.
 
-```
+```nasm
 .text:00643045	push    edi
 .text:00643046	mov    	ecx, offset window
 .text:0064304B	call	SetWindowStyle
@@ -18,9 +18,12 @@ These lines of assembly can be translated into `SetWindowStyle(&window, 1);` as 
 There is no condition for this call so it will always be called regardless of the user configuration. The following
 code exists further up the procedure:
 
-```
-if ( RegistryRetrieveULong("Software\Lionhead Studios Ltd\Black & White\BWSetup", "FullScreen", &regDetailIdx) )
-	SetWindowStyle(&window, 1);
+```c
+if ( RegistryRetrieveULong("Software\\Lionhead Studios Ltd\\Black & White\\BWSetup", "FullScreen", &isFullScreen) )
+        MAKE_FULLSCREEN: SetWindowStyle(&window, 1);
+
+if (isFullScreen)
+	goto MAKE_FULLSCREEN;
 ```
 
 As such we can deduce that the function call is for making the game fullscreen. So in order to get windowed mode to
