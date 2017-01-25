@@ -6,7 +6,7 @@ it deems too far away to matter. On older hardware it adjusts it's view distance
 lower then that of newer hardware. It does so by checking if:
 
 * The detail level is set to `Maximum Detail.`
-* Processor matches a known one.
+* Processor's family id is exactly `15` (__asm { cpuid })
 
 ## Procedure
 
