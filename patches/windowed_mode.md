@@ -28,7 +28,7 @@ work properly, we simply remove the secondary non-conditioned call to `SetWindow
 
 ## Patch
 
-We only need to remove 3 instructions so we NOP out the following addresses: `.text:00643045` to `.text:0064304B`
-This translates to the exe's binary position of `0x243045` to `0x24304B` which we fill with `0x90`.
+We only need to remove 3 instructions so we NOP out the following addresses: `.text:00643045` to `.text:0064304F`
+This translates to the exe's binary position of `0x243045` to `0x24304F` which we fill with `0x90`.
 
 After these changes the game's windowed function works as intended and respects the registry option.
