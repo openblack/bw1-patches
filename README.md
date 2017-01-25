@@ -10,3 +10,4 @@ patches are for the unprotected binary file.
 * [Low Resolution Textures](patches/low_res_textures.md)
 * [Fixing Detail Level](patches/fix_detail_level.md)
 * [Addons / Extra Features](patches/extra_features.md)
+* [Landscape Draw Distance](patches/landscape_draw_distance.md)
