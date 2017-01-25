@@ -22,8 +22,8 @@ is installed. It checks a preset of strings:
 
 Straight away in the procedure we can see exaclty where the procedure is getting caught each time.
 
-```
-if ( RegistryRetrieveString("Software\Microsoft\Windows\CurrentVersion", "ProductId", &productID, &v10) == 2 )
+```c
+if ( RegistryRetrieveString("Software\\Microsoft\\Windows\\CurrentVersion", "ProductId", &productID, &v10) == 2 )
 {		
 	LHRegistrySetCurrentKey(v2);
 	return 0;
