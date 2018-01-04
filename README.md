@@ -17,3 +17,4 @@ Black & White (2001) can be assumed under the rules of abandonware; the original
 * [Fixing Detail Level](patches/fix_detail_level.md)
 * [Addons / Extra Features](patches/extra_features.md)
 * [Landscape Draw Distance](patches/landscape_draw_distance.md)
+* [Skip Tutorial](patches/skip_tutorial.md)
