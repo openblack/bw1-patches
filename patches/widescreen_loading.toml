@@ -1,0 +1,70 @@
+name = "widescreen_loading"
+title = "Widescreen Loading Screen"
+summary = "Keep the loading-screen tip image 4:3 and the tip text on-screen on widescreen displays."
+doc = "docs/widescreen_loading.md"
+
+# The tip-of-the-day loading screen (helper at vaddr 0x005F3DC0, called from
+# RenderLoadingFrame @ 0x005F4E40) computes its layout from the screen WIDTH,
+# assuming w == 4/3 h: the tip image is 0.64w x 0.64h (stretched on 16:9) and the
+# text band's *vertical* position is 0.6w (= 1.07h at 16:9, i.e. below the screen,
+# which is why the tip text disappears). We redirect the 189-byte layout block at
+# 0x005F3E5C into a cave that uses cw = min(w, h*4/3) and re-centres the
+# x-coordinates with (w-cw)/2. 4:3 and 5:4 displays are bit-for-bit unaffected.
+#
+# Bytes are produced by scripts/widescreen_loading_asm.py (keystone). The cave sits in
+# the .text tail zero-pad after the saves_in_documents routine.
+
+# 1) The code cave (194 bytes at vaddr 0x8A8AB0).
+[[op]]
+kind = "replace"
+offset = 0x4A8AB0
+note = "4:3 letterboxed layout computation for the tip loading screen"
+bytes = '''
+  8B 35 58 50 E8 00 81 E6 FF FF 00 00 57 31 FF 66 8B 3D 5A 50 E8 00 89 74
+  24 1C 89 7C 24 34 8D 04 BD 00 00 00 00 31 D2 B9 03 00 00 00 F7 F1 39 F0
+  76 02 89 F0 89 F1 29 C1 D1 E9 89 44 24 2C DB 44 24 2C D9 C0 D8 0D 20 B6
+  8A 00 DB 5C 24 44 01 4C 24 44 D9 C0 D8 0D 18 B6 8A 00 DB 5C 24 50 01 4C
+  24 50 D9 C0 D8 0D DC 7B 8C 00 DB 5C 24 3C D9 C0 D8 0D E8 49 8C 00 DB 5C
+  24 4C 01 4C 24 4C D8 0D 8C A2 8C 00 DB 5C 24 40 89 7C 24 2C DB 44 24 2C
+  D9 C0 D8 0D 00 F0 8C 00 DB 5C 24 18 D9 C0 D8 0D F4 C3 8A 00 DB 5C 24 48
+  D8 0D 8C A2 8C 00 DB 5C 24 2C D8 0D 70 B2 8A 00 50 DB 1C 24 58 E9 A7 B3
+  D4 FF
+'''
+expect = '''
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00
+'''
+
+# 2) Hook: jmp into the cave, NOP the rest of the original layout block.
+#    `expect` is the entire original 189-byte block.
+[[op]]
+kind = "replace"
+offset = 0x1F3E5C
+note = "redirect layout block 0x5F3E5C..0x5F3F18 into the cave"
+bytes = '''
+  E9 4F 4C 2B 00 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+  90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+  90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+  90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+  90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+  90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+  90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+  90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+'''
+expect = '''
+  8B 35 58 50 E8 00 81 E6 FF FF 00 00 57 89 74 24 1C DB 44 24 1C 33 FF 66
+  8B 3D 5A 50 E8 00 D9 C0 D8 0D 20 B6 8A 00 89 7C 24 34 E8 75 D5 1A 00 D9
+  C0 D8 0D 18 B6 8A 00 89 44 24 44 E8 64 D5 1A 00 D9 C0 D8 0D DC 7B 8C 00
+  89 44 24 50 E8 53 D5 1A 00 DB 44 24 34 89 44 24 3C D9 54 24 2C D8 0D 00
+  F0 8C 00 E8 3C D5 1A 00 D9 C0 D8 0D E8 49 8C 00 89 44 24 18 E8 2B D5 1A
+  00 D9 44 24 2C D8 0D F4 C3 8A 00 89 44 24 4C E8 18 D5 1A 00 D8 0D 8C A2
+  8C 00 89 44 24 48 E8 09 D5 1A 00 D9 44 24 2C D8 0D 8C A2 8C 00 89 44 24
+  40 E8 F6 D4 1A 00 D8 0D 70 B2 8A 00 89 44 24 2C E8 E7 D4 1A 00
+'''

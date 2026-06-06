@@ -1,0 +1,82 @@
+name = "widescreen_logos"
+title = "Widescreen Intro Logos"
+summary = "Keep the intro logo screens (logo.bik / pre_intro.bik) 4:3 on widescreen displays."
+doc = "docs/widescreen_logos.md"
+
+# The intro logo screens -- PlayLogoScreens @ 0x642950 (logo.bik, the Lionhead/EA
+# logo stills) and PlayPreIntroVideo @ 0x6426F0 (pre_intro.bik) -- pass the raw
+# screen size as the Bink destination rect, so 4:3 content stretches on
+# widescreen. We redirect each call-site layout block into a cave that uses
+# cw = min(w, h*4/3) as the dest width and centres with x += (w-cw)/2.
+# 4:3 and 5:4 displays are bit-for-bit unaffected. The shared Bink blitter
+# (0x845740) is left alone: the in-game movie player computes its own rects.
+#
+# Bytes are produced by scripts/widescreen_logos_asm.py (keystone). The caves sit
+# in the .text tail zero-pad after the windowed_screen_capture cave; the
+# patches are independent and can be applied in any order.
+
+# 1) Cave for PlayLogoScreens (73 bytes at vaddr 0x8A8BA0).
+[[op]]
+kind = "replace"
+offset = 0x4A8BA0
+note = "4:3 letterboxed dest rect for the logo.bik stills"
+bytes = '''
+  31 D2 66 8B 15 5A 50 E8 00 8D 04 95 00 00 00 00 52 31 D2 B9 03 00 00 00
+  F7 F1 5A 8B 0D 58 50 E8 00 81 E1 FF FF 00 00 39 C8 76 02 89 C8 29 C1 D1
+  E9 49 6A 00 6A 00 88 5C 24 47 52 50 6A FF 51 8B 4C 24 54 51 E9 18 A1 D9
+  FF
+'''
+expect = '''
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00
+'''
+
+# 2) Cave for PlayPreIntroVideo (80 bytes at vaddr 0x8A8BF0).
+[[op]]
+kind = "replace"
+offset = 0x4A8BF0
+note = "4:3 letterboxed dest rect for pre_intro.bik"
+bytes = '''
+  31 C0 66 A1 5A 50 E8 00 50 C1 E0 02 31 D2 B9 03 00 00 00 F7 F1 5A 8B 0D
+  58 50 E8 00 81 E1 FF FF 00 00 39 C8 76 02 89 C8 29 C1 D1 E9 53 53 C6 44
+  24 18 FF C6 44 24 19 FF C6 44 24 1A FF C6 44 24 1B FF 52 50 53 51 8B 54
+  24 28 52 E9 62 9C D9 FF
+'''
+expect = '''
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00
+'''
+
+# 3) Hook in PlayLogoScreens: redirect 0x642CDB..0x642D00 into cave 1.
+[[op]]
+kind = "replace"
+offset = 0x242CDB
+note = "redirect logo.bik dest-rect block into the cave"
+bytes = '''
+  E9 C0 5E 26 00 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+  90 90 90 90 90 90 90 90 90 90 90 90 90 90
+'''
+expect = '''
+  A1 58 50 E8 00 33 D2 66 8B 15 5A 50 E8 00 6A 00 6A 00 25 FF FF 00 00 88
+  5C 24 47 8B 4C 24 44 52 50 6A FF 6A FF 51
+'''
+
+# 4) Hook in PlayPreIntroVideo: redirect 0x64286F..0x6428A1 into cave 2.
+[[op]]
+kind = "replace"
+offset = 0x24286F
+note = "redirect pre_intro.bik dest-rect block into the cave"
+bytes = '''
+  E9 7C 63 26 00 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+  90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+  90 90 90
+'''
+expect = '''
+  8B 0D 58 50 E8 00 33 C0 66 A1 5A 50 E8 00 53 53 81 E1 FF FF 00 00 C6 44
+  24 18 FF C6 44 24 19 FF C6 44 24 1A FF 50 51 53 C6 44 24 27 FF 8B 54 24
+  24 53 52
+'''

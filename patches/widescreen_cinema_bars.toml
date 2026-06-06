@@ -1,0 +1,93 @@
+name = "widescreen_cinema_bars"
+title = "Widescreen Cinematic Bars"
+summary = "Bring back the cinematic letterbox bars in cutscenes on widescreen displays."
+doc = "docs/widescreen_cinema_bars.md"
+
+# The cutscene letterbox bars (script command SET_WIDESCREEN) are sized as
+# h - w*9/16 -- "crop to 16:9" -- which is exactly zero on a 16:9 display, so
+# the bars never show on widescreen. We redirect the five copies of that
+# formula into a cave that uses the effective 4:3 width min(w, h*4/3) instead,
+# restoring the original 12.5%%-of-height bars (a ~2.37:1 visible area on 16:9,
+# the classic cinema scope ratio). 4:3 and 5:4 displays are bit-for-bit
+# unaffected. Bar drawing, help-text placement and the cutscene mouse/UI
+# clamps all share these five sites, so everything stays in agreement.
+#
+# Bytes are produced by scripts/widescreen_cinema_bars_asm.py (keystone). The cave
+# sits in the .text tail zero-pad after the widescreen_logos caves; all the
+# widescreen patches are independent and can be applied in any order.
+
+# 1) The code cave (51 bytes at vaddr 0x8A8C50).
+[[op]]
+kind = "replace"
+offset = 0x4A8C50
+note = "bar height from effective 4:3 width: min(w, h*4/3) * 9/16"
+bytes = '''
+  50 51 52 A1 E8 39 E8 00 8D 04 85 00 00 00 00 31 D2 B9 03 00 00 00 F7 F1
+  8B 0D E4 39 E8 00 39 C8 76 02 89 C8 50 DB 04 24 D8 0D 50 7A 8C 00 58 5A
+  59 58 C3
+'''
+expect = '''
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00
+'''
+
+# 2) GInterface usable-height clamp #1 @ 0x456F22.
+[[op]]
+kind = "replace"
+offset = 0x56F22
+note = "GInterface usable-height clamp #1: w*9/16 -> cave"
+bytes = '''
+  E8 29 1D 45 00 90 90 90 90 90 90 90
+'''
+expect = '''
+  DB 05 E4 39 E8 00 D8 0D 50 7A 8C 00
+'''
+
+# 3) GInterface usable-height clamp #2 @ 0x45B978.
+[[op]]
+kind = "replace"
+offset = 0x5B978
+note = "GInterface usable-height clamp #2: w*9/16 -> cave"
+bytes = '''
+  E8 D3 D2 44 00 90 90 90 90 90 90 90
+'''
+expect = '''
+  DB 05 E4 39 E8 00 D8 0D 50 7A 8C 00
+'''
+
+# 4) GInterface usable-height clamp #3 @ 0x45D05F.
+[[op]]
+kind = "replace"
+offset = 0x5D05F
+note = "GInterface usable-height clamp #3: w*9/16 -> cave"
+bytes = '''
+  E8 EC BB 44 00 90 90 90 90 90 90 90
+'''
+expect = '''
+  DB 05 E4 39 E8 00 D8 0D 50 7A 8C 00
+'''
+
+# 5) HelpSystem bar-height helper @ 0x5C5786.
+[[op]]
+kind = "replace"
+offset = 0x1C5786
+note = "HelpSystem bar-height helper: w*9/16 -> cave"
+bytes = '''
+  E8 C5 34 2E 00 90 90 90 90 90 90 90
+'''
+expect = '''
+  DB 05 E4 39 E8 00 D8 0D 50 7A 8C 00
+'''
+
+# 6) shared bar-height helper (bar drawers, visible-area rects) @ 0x81E8B6.
+[[op]]
+kind = "replace"
+offset = 0x41E8B6
+note = "shared bar-height helper (bar drawers, visible-area rects): w*9/16 -> cave"
+bytes = '''
+  E8 95 A3 08 00 90 90 90 90 90 90 90
+'''
+expect = '''
+  DB 05 E4 39 E8 00 D8 0D 50 7A 8C 00
+'''
