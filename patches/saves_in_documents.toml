@@ -1,0 +1,67 @@
+name = "saves_in_documents"
+title = "Saves in Documents"
+summary = "Redirect all save games / profiles to %USERPROFILE%\\Documents\\My Games\\Black & White instead of the (often read-only) install directory."
+doc = "docs/saves_in_documents.md"
+
+# Black & White builds every save path relative to the current working directory
+# (the install folder) through PathCreator's innermost helper at .text:0x0078EA00:
+#     sprintf(dest, ".\%s", obj->name)        ; ".\%s" string @ 0x00C285D4
+# Every other PathCreator method roots its path in that ".\" prefix, so redirecting
+# this one function moves all saves at once. Bundled game data (Data\, Scripts\) is
+# loaded by unrelated code and is left untouched.
+#
+# We append a small routine into the 1680-byte zero pad at the tail of .text
+# (file 0x4A8970 / vaddr 0x8A8970) and jump to it from 0x0078EA00. The routine
+# resolves the user's Documents folder via SHGetFolderPathA(CSIDL_PERSONAL), falling
+# back to %USERPROFILE%\Documents, creates Documents\My Games\Black & White (mkdir -p),
+# and writes "<that>\<name>" into the caller's buffer. See docs/saves_in_documents.md.
+#
+# Bytes are produced by scripts/saves_in_documents_asm.py (keystone). Cave entry is at
+# vaddr 0x8A89DD; the routine starts after a 109-byte string table.
+
+# 1) The code cave. `expect` is the full 318-byte zero pad, so the op aborts
+#    unless that region is genuinely empty (right exe, not already patched).
+[[op]]
+kind = "replace"
+offset = 0x4A8970
+note = "PathCreator -> Documents redirect routine (318 bytes: 109 string + 209 code)"
+bytes = '''
+  73 68 65 6C 6C 33 32 2E 64 6C 6C 00 53 48 47 65 74 46 6F 6C 64 65 72 50
+  61 74 68 41 00 55 53 45 52 50 52 4F 46 49 4C 45 00 25 73 5C 4D 79 20 47
+  61 6D 65 73 5C 42 6C 61 63 6B 20 26 20 57 68 69 74 65 00 25 73 5C 44 6F
+  63 75 6D 65 6E 74 73 5C 4D 79 20 47 61 6D 65 73 5C 42 6C 61 63 6B 20 26
+  20 57 68 69 74 65 00 25 73 5C 25 73 00 55 89 E5 53 56 57 81 EC 50 02 00
+  00 8B 79 04 68 70 89 8A 00 FF 15 6C 91 8A 00 85 C0 74 2C 68 7C 89 8A 00
+  50 FF 15 70 91 8A 00 85 C0 74 1C 8D 95 A4 FD FF FF 52 6A 00 6A 00 6A 05
+  6A 00 FF D0 85 C0 75 07 BE 99 89 8A 00 EB 1C 8D 95 A4 FD FF FF 68 10 01
+  00 00 52 68 8D 89 8A 00 FF 15 C0 92 8A 00 BE B3 89 8A 00 8D 85 A4 FD FF
+  FF 50 56 8D 85 B4 FE FF FF 50 E8 7B CD F1 FF 83 C4 0C 8D B5 B4 FE FF FF
+  8D 5E 03 8A 03 84 C0 74 16 3C 5C 75 0F C6 03 00 6A 00 56 FF 15 68 91 8A
+  00 C6 03 5C 43 EB E4 6A 00 56 FF 15 68 91 8A 00 8B 4D 08 57 8D 85 B4 FE
+  FF FF 50 68 D7 89 8A 00 51 E8 34 CD F1 FF 83 C4 10 81 C4 50 02 00 00 5F
+  5E 5B 5D C2 04 00
+'''
+expect = '''
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 00 00
+'''
+
+# 2) Hook: overwrite the first 5 bytes of 0x0078EA00 with `jmp 0x8A89DD`.
+[[op]]
+kind = "replace"
+offset = 0x38EA00
+note = "jmp into the redirect routine (was: mov eax,[ecx+4]; mov ecx,...)"
+expect = "8B 41 04 8B 4C"
+bytes = "E9 D8 9F 11 00"
