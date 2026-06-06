@@ -1,5 +1,7 @@
 # Landscape Draw Distance
 
+> Machine-readable definition: [`patches/landscape_draw_distance.toml`](../patches/landscape_draw_distance.toml) — apply it with the [`bw1patch`](../tool) tool.
+
 Black & White morphs it's landscape at far distances, this is a simple technique called level of detail.
 It's a way for the game to display as much as possible as fast as possible by skipping out on details
 it deems too far away to matter. On older hardware it adjusts it's view distance automatically to be

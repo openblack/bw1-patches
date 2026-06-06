@@ -1,7 +1,9 @@
 # Low Resolution Textures
 
-On modern machines all textures in the game appear at a much lower resolution then originally intended.
-This is due to an overflow in the integer used to store how much VRAM is avaliable on the client.
+> Machine-readable definition: [`patches/low_res_textures.toml`](../patches/low_res_textures.toml) — apply it with the [`bw1patch`](../tool) tool.
+
+On modern machines all textures in the game appear at a much lower resolution than originally intended.
+This is due to an overflow in the integer used to store how much VRAM is available on the client.
 The game detects a high amount of VRAM as too little VRAM due to the overflow and forces low resolution
 textures.
 

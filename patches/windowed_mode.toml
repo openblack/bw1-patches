@@ -1,0 +1,16 @@
+name = "windowed_mode"
+title = "Windowed Mode"
+summary = "Make the game respect the windowed-mode registry option instead of always forcing fullscreen."
+doc = "docs/windowed_mode.md"
+
+# The config loader (PCMain.cpp) reads the FullScreen registry value and acts on it,
+# but then unconditionally calls SetWindowStyle(&window, 1) afterwards, forcing fullscreen.
+# We NOP the three unconditional instructions (push edi; mov ecx, offset window; call SetWindowStyle).
+#   .text:00643045 push edi                 ; 1 byte  (57)
+#   .text:00643046 mov  ecx, offset window  ; 5 bytes (B9 ?? ?? ?? ??)
+#   .text:0064304B call SetWindowStyle      ; 5 bytes (E8 ?? ?? ?? ??)
+[[op]]
+kind = "nop"
+offset = 0x243045
+len = 11
+expect = "57 B9 50 50 E8 00 E8 80 A0 19 00" # full block (bw1-decomp 0759)

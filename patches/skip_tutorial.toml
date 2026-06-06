@@ -1,0 +1,18 @@
+name = "skip_tutorial"
+title = "Skip Tutorial"
+summary = "Always offer the 'skip tutorial' prompt on a new game, even on a fresh profile."
+doc = "docs/skip_tutorial.md"
+
+# GGame::DoYesNoSkipTutorialRequestersIfNecessary() only shows the skip dialog when
+#   PlayerProfile::GetNumberOfProfiles() > 1 || g_Game->CurrentProfileHasACreature()
+# NOP the condition so the dialog (PauseGame(1); g_SkipBox->Show()) always runs.
+#   .text:0054CBF4 .. 0x0054CC0C inclusive (next kept instruction: push 1 @ 0x54CC0D)
+# The block is 25 bytes: it must include the trailing `je 0x54CC22` (74 15). An earlier
+# revision used 23, leaving the je live on stale FLAGS from an unrelated `and` above —
+# it fell through only by luck. `expect` is the full original block (bw1-decomp 0480).
+[[op]]
+kind = "nop"
+offset = 0x14CBF4
+len = 25
+expect = "E8 C7 ED 11 00 83 F8 01 7F 0F 8B 0D 5C 19 D0 00 E8 27 8E 00 00 85 C0 74 15"
+note = "Remove the if-condition guarding the skip-tutorial dialog"

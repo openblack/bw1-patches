@@ -1,0 +1,37 @@
+name = "fix_detail_level"
+title = "Fix Detail Level"
+summary = "Default to Maximum detail, disallow the broken Custom level, and remove the faulty CPU-speed auto-detect."
+doc = "docs/fix_detail_level.md"
+
+# Three independent edits in the config loader (PCMain.cpp):
+#
+# 1. Default detail level High (3) -> Maximum (4).
+[[op]]
+kind = "replace"
+offset = 0x242FDE
+expect = "03"
+bytes  = "04"
+note   = "Default detail level: High -> Maximum"
+
+# 2. Registry detail-level range check: reject anything >= 4 instead of >= 7,
+#    so the broken Custom level (5) can no longer be selected.
+[[op]]
+kind = "replace"
+offset = 0x242FF1
+expect = "07"
+bytes  = "04"
+note   = "Range check upper bound: >= 7 -> >= 4 (blocks Custom)"
+
+# 3. NOP the CPU-speed auto-detect block. GetCPUSpeed() times a Sleep(100) with a signed
+#    counter that overflows and mis-classifies modern CPUs. With it gone, the default
+#    (now Maximum, from edit 1) is used when no detailidx is set.
+#       .text:00642FF8 .. 0x0064301E inclusive (next kept instruction: push esi @ 0x64301F)
+# The block is 39 bytes: the trailing `mov esi, ecx` (8B F1) is two bytes. An earlier
+# revision used 38 and cut that instruction in half, leaving a stray F1 (INT1) on the
+# fresh-profile path. `expect` is the full original block (bw1-decomp 0759).
+[[op]]
+kind = "nop"
+offset = 0x242FF8
+len = 39
+expect = "E8 A3 F9 E2 FF 3D 80 02 00 00 7E 07 BE 04 00 00 00 EB 14 3D A4 01 00 00 7D 0D 33 C9 3D 68 01 00 00 0F 9D C1 41 8B F1"
+note = "Remove faulty GetCPUSpeed() auto-detect"

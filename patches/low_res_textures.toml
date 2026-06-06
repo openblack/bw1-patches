@@ -1,0 +1,19 @@
+name = "low_res_textures"
+title = "Low Resolution Textures"
+summary = "Stop the VRAM check from forcing low-res textures on cards with 2GB+ of VRAM (signed int overflow)."
+doc = "docs/low_res_textures.md"
+
+# if ( GetTextureAvaliable() < 13000000 ) g_UseLowResTexture = true;
+# GetTextureAvaliable() returns a signed int; >2GB VRAM overflows it negative, so the
+# comparison wrongly passes and low-res textures are forced. The default value of the
+# g_UseLowResTexture global is already 0, so we simply NOP the whole check.
+#   .text:0064302E mov ecx, offset window      ; 5 bytes (B9 ?? ?? ?? ??)
+#   .text:00643033 call GetTextureAvaliable    ; 5 bytes
+#   .text:00643038 cmp eax, 13000000           ; 5 bytes
+#   .text:0064303D jge short loc_643045        ; 2 bytes
+#   .text:0064303F mov g_UseLowResTexture, edi  ; 6 bytes  -> ends at 0x243045
+[[op]]
+kind = "nop"
+offset = 0x24302E
+len = 23
+expect = "B9 50 50 E8 00 E8 48 BC 19 00 3D 40 5D C6 00 7D 06 89 3D 70 D4 ED 00" # full block (bw1-decomp 0759)

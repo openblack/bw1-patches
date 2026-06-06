@@ -1,5 +1,7 @@
 # Secret Creatures
 
+> Machine-readable definition: [`patches/secret_creatures.toml`](../patches/secret_creatures.toml) — apply it with the [`bw1patch`](../tool) tool.
+
 Black & White has secret creatures for different disc editions of the game. By default these include the:
 
 * Gorilla

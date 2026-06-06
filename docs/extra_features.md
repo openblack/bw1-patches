@@ -1,5 +1,7 @@
 # Addons / Extra Features
 
+> Machine-readable definition: [`patches/extra_features.toml`](../patches/extra_features.toml) — apply it with the [`bw1patch`](../tool) tool.
+
 Black & White has [addons / extra features](http://www.bwfiles.com/files/category.php?id=23)
 that can be enabled by the user by installing them. The official addons are:
 
@@ -20,7 +22,7 @@ is installed. It checks a preset of strings:
 * `CreatureMusicMood`
 * `football`
 
-Straight away in the procedure we can see exaclty where the procedure is getting caught each time.
+Straight away in the procedure we can see exactly where the procedure is getting caught each time.
 
 ```c
 if ( RegistryRetrieveString("Software\\Microsoft\\Windows\\CurrentVersion", "ProductId", &productID, &v10) == 2 )

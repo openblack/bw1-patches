@@ -1,7 +1,9 @@
 # Skip Tutorial
 
-Skipping the tutorial can be a desired feature for veterens of the game. The game by default offers this
-functionality if you have more then 1 profile or if you already have a creature on the current profile.
+> Machine-readable definition: [`patches/skip_tutorial.toml`](../patches/skip_tutorial.toml) — apply it with the [`bw1patch`](../tool) tool.
+
+Skipping the tutorial can be a desired feature for veterans of the game. The game by default offers this
+functionality if you have more than 1 profile or if you already have a creature on the current profile.
 
 ## Procedure
 
@@ -19,7 +21,7 @@ void GGame::DoYesNoSkipTutorialRequestersIfNecessary()
 ```
 
 Depending on the action taken by the user in the skip box dialog, GGame constants are changed to skip the
-tutorial. Knowing this we can simple remove the if condition required to show the skip dialog so the method
+tutorial. Knowing this we can simply remove the if condition required to show the skip dialog so the method
 would read:
 
 ```cpp

@@ -1,10 +1,12 @@
 # Fixing Detail Level
 
+> Machine-readable definition: [`patches/fix_detail_level.toml`](../patches/fix_detail_level.toml) — apply it with the [`bw1patch`](../tool) tool.
+
 When Black & White 1 was shipped it came with several different detail modes with a custom
 detail mode intended for advanced users. The idea is that you can enable additional features with
 the custom setting option. This however is not true and the custom setting level actually
 results in many features being turned off and most custom options being ignored. The simplest
-way to get the best apperance out of the game is to use the maximum detail level.
+way to get the best appearance out of the game is to use the maximum detail level.
 
 The detail levels are as follows:
 
@@ -23,7 +25,7 @@ The following lines of assembly are from the procedure from `.text:00642D80` to 
 The procedure is compiled from `PCMain.cpp` and is responsible for loading the registry configuration.
 
 The first issue is if no detail index is set the game will try to automatically adjust to the best
-detail level it deems. The assmebly isn't easily translated but the C style syntax of how it works is so:
+detail level it deems. The assembly isn't easily translated but the C style syntax of how it works is so:
 
 ```c
 cpuSpeed = GetCPUSpeed();
@@ -57,4 +59,4 @@ We want to adjust the range check on the registry detail level reader to disallo
 can do this by changing the byte at `.text:00642FF1` from `0x07` to `0x04` which will change the range check to `>= 4`
 
 The last thing we want to do is very simple and that's change the default detail level from High to Maximum.
-We do ths by changing the following byte at `.text:00642FDE` from `0x03` to `0x04`
+We do this by changing the following byte at `.text:00642FDE` from `0x03` to `0x04`

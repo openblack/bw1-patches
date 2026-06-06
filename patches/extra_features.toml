@@ -1,0 +1,15 @@
+name = "extra_features"
+title = "Addons / Extra Features"
+summary = "Fix the official addons (Football, Villager Banter, MP3) on Windows Vista and newer."
+doc = "docs/extra_features.md"
+
+# ExtraFeatures.cpp bails out when it can't read the ProductId from
+# Software\Microsoft\Windows\CurrentVersion (the key moved to ...\Windows NT\... on
+# modern Windows). Flip the conditional jump that guards the bail-out from jnz (75)
+# to jmp (EB) so the missing-key path is skipped.
+[[op]]
+kind = "replace"
+offset = 0x125AD2
+expect = "75" # jnz
+bytes  = "EB" # jmp
+note   = "Skip ProductId existence check"

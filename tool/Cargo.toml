@@ -1,0 +1,20 @@
+[package]
+name = "bw1patch"
+version = "1.0.0"
+edition = "2021"
+description = "Apply the openblack Black & White 1 binary patches to an unprotected game executable."
+repository = "https://github.com/openblack/bw1-patches"
+license = "MIT"
+
+[[bin]]
+name = "bw1patch"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+include_dir = "0.7"
+
+[profile.release]
+strip = true

@@ -1,0 +1,29 @@
+name = "landscape_draw_distance"
+title = "Landscape Draw Distance"
+summary = "Remove the CPU-family check that capped landscape LOD draw distance on modern processors."
+doc = "docs/landscape_draw_distance.md"
+
+# sub_804E60 originally returns:
+#   bGoodCPU && DetailIdx == 4 && bUnusedGraphicsOptionAlwaysOne
+# bGoodCPU is set by a cpuid family==15 check that fails on modern CPUs. We NOP the
+# bGoodCPU test and the bUnusedGraphicsOptionAlwaysOne test, leaving `return DetailIdx == 4`.
+#
+# Region 1 - drop `mov al, bGoodCPU; test al, al; jz short loc_804E81`:
+#   .text:00804E60 mov al, bGoodCPU   ; 5 bytes (A0 ?? ?? ?? ??)
+#   .text:00804E65 test al, al        ; 2 bytes
+#   .text:00804E67 jz short loc_804E81; 2 bytes  -> through 0x404E68 inclusive
+[[op]]
+kind = "nop"
+offset = 0x404E60
+len = 9
+expect = "A0" # mov al, bGoodCPU
+
+# Region 2 - drop `mov eax, bUnusedGraphicsOptionAlwaysOne; test eax, eax; jz short loc_804E81`:
+#   .text:00804E72 mov eax, [..]      ; 5 bytes (A1 ?? ?? ?? ??)
+#   .text:00804E77 test eax, eax      ; 2 bytes
+#   .text:00804E79 jz short loc_804E81; 2 bytes  -> through 0x404E7A inclusive
+[[op]]
+kind = "nop"
+offset = 0x404E72
+len = 9
+expect = "A1" # mov eax, bUnusedGraphicsOptionAlwaysOne

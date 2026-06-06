@@ -1,5 +1,7 @@
 # Windowed Mode
 
+> Machine-readable definition: [`patches/windowed_mode.toml`](../patches/windowed_mode.toml) — apply it with the [`bw1patch`](../tool) tool.
+
 By default the game reads the registry value for if the game should be in windowed mode,
 acts appropriately, but then forces fullscreen mode afterwards making the option useless.
 

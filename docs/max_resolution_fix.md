@@ -1,6 +1,10 @@
 # Max Resolution Fix
 
-Black & White will crash on resolution's with a width or height higher then 2048 pixels.
+> **Note:** Unlike the other patches, this one is *not* a modification of the game
+> executable, so it is not handled by the [`bw1patch`](../tool) tool. It is a runtime
+> proxy DLL and must be installed alongside the game separately.
+
+Black & White will crash on resolutions with a width or height higher than 2048 pixels.
 
 This is due to a failure in creating a Direct3D device, in the DLL `d3dim700.dll` in the method
 `DIRECT3DDEVICEI::Init` there is a check for a width or height of over `2048` if this is the case

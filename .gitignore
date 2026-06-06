@@ -1,0 +1,6 @@
+# Rust build artifacts
+/tool/target/
+
+# Game executables — never commit copyrighted binaries
+*.exe
+*.dll
