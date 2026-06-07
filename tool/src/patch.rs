@@ -27,6 +27,10 @@ pub struct Patch {
     /// Optional path (relative to repo root) to the reverse-engineering writeup.
     #[serde(default)]
     pub doc: Option<String>,
+    /// Work-in-progress: excluded from the default set. It is only applied when named
+    /// explicitly via `--only`, never by a plain run or `--skip`.
+    #[serde(default)]
+    pub wip: bool,
     /// The byte operations that make up this patch.
     #[serde(rename = "op", default)]
     pub ops: Vec<Op>,

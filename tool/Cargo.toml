@@ -16,5 +16,10 @@ serde = { version = "1", features = ["derive"] }
 toml = "0.8"
 include_dir = "0.7"
 
+# Icon injection (the `icon` subcommand) uses the Win32 resource-update APIs, so the
+# dependency — and that code path — is Windows-only. Byte patching stays cross-platform.
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = ["Win32_System_LibraryLoader", "Win32_Foundation"] }
+
 [profile.release]
 strip = true

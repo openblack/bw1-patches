@@ -1,20 +1,27 @@
 //! bw1patch — apply the openblack Black & White 1 binary patches to an executable.
 
+mod icon;
 mod patch;
 
-use clap::Parser;
+use clap::{Args, Parser, Subcommand};
 use patch::{hex, load_dir, load_embedded, Patch, Warning};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
 /// Apply the Black & White 1 / Creature Isle binary patches to an unprotected executable.
 ///
-/// By default every patch is applied. Use --skip to leave some out, or --only to apply a
-/// specific set. Each edit verifies the bytes it is about to overwrite, so pointing this
-/// at the wrong file fails loudly instead of corrupting it.
+/// By default every patch is applied except work-in-progress (WIP) ones. Use --skip to
+/// leave some out, or --only to apply a specific set (--only also enables WIP patches by
+/// name). Each edit verifies the bytes it is about to overwrite, so pointing this at the
+/// wrong file fails loudly instead of corrupting it.
 #[derive(Parser)]
 #[command(name = "bw1patch", version, about, long_about = None)]
+#[command(args_conflicts_with_subcommands = true, subcommand_negates_reqs = true)]
 struct Cli {
+    /// Subcommand. When omitted, bw1patch applies byte patches (the arguments below).
+    #[command(subcommand)]
+    command: Option<Command>,
+
     /// The source executable to patch (e.g. runblack.exe).
     #[arg(required_unless_present = "list")]
     input: Option<PathBuf>,
@@ -52,6 +59,46 @@ struct Cli {
     force: bool,
 }
 
+#[derive(Subcommand)]
+enum Command {
+    /// Inject an .ico into the executable as the "AppIcon" group icon (Windows only).
+    ///
+    /// The game already does LoadIconA(hInstance, "AppIcon") but ships with no icon
+    /// resources, so the window/taskbar fall back to the generic Windows icon. This adds a
+    /// RT_GROUP_ICON named APPICON (case-insensitively matching "AppIcon") plus its RT_ICON
+    /// images, so the existing code loads it — no byte patch needed. See docs/window_icon.md.
+    Icon(IconArgs),
+}
+
+#[derive(Args)]
+struct IconArgs {
+    /// The target executable to add the icon to (e.g. runblack.exe).
+    exe: PathBuf,
+
+    /// The icon file to inject (.ico, may contain multiple sizes).
+    ico: PathBuf,
+
+    /// Where to write the iconned executable.
+    #[arg(short, long, required_unless_present = "in_place")]
+    output: Option<PathBuf>,
+
+    /// Modify the target executable in place instead of writing a separate output.
+    #[arg(long, conflicts_with = "output")]
+    in_place: bool,
+
+    /// RT_GROUP_ICON name (matches the game's "AppIcon"; names are case-insensitive).
+    #[arg(long, default_value = "APPICON")]
+    name: String,
+
+    /// Resource language id (0 = neutral).
+    #[arg(long, default_value_t = 0)]
+    lang: u16,
+
+    /// First RT_ICON resource id; images are numbered from here.
+    #[arg(long, default_value_t = 1)]
+    first_id: u16,
+}
+
 fn main() -> ExitCode {
     match run() {
         Ok(()) => ExitCode::SUCCESS,
@@ -64,6 +111,10 @@ fn main() -> ExitCode {
 
 fn run() -> Result<(), String> {
     let cli = Cli::parse();
+
+    if let Some(Command::Icon(args)) = &cli.command {
+        return run_icon(args);
+    }
 
     let patches = match &cli.patches_dir {
         Some(dir) => load_dir(dir).map_err(|e| e.to_string())?,
@@ -147,10 +198,39 @@ fn run() -> Result<(), String> {
     Ok(())
 }
 
+/// Inject an `.ico` into the executable as the `AppIcon` group icon (the `icon` subcommand).
+fn run_icon(args: &IconArgs) -> Result<(), String> {
+    let data =
+        std::fs::read(&args.ico).map_err(|e| format!("cannot read {:?}: {e}", args.ico))?;
+    let images =
+        icon::parse_ico(&data).map_err(|e| format!("{:?}: {e}", args.ico))?;
+
+    // With -o we work on a copy; --in-place rewrites the target itself.
+    let target: PathBuf = match &args.output {
+        Some(out) => {
+            std::fs::copy(&args.exe, out)
+                .map_err(|e| format!("cannot copy {:?} to {out:?}: {e}", args.exe))?;
+            out.clone()
+        }
+        None => args.exe.clone(),
+    };
+
+    icon::inject(&target, &images, &args.name, args.lang, args.first_id)?;
+
+    println!(
+        "Injected {} icon image(s) [{}] as RT_GROUP_ICON \"{}\" into {target:?}",
+        images.len(),
+        icon::describe(&images),
+        args.name,
+    );
+    Ok(())
+}
+
 fn list_patches(patches: &[Patch]) {
     println!("Available patches ({}):\n", patches.len());
     for p in patches {
-        println!("  {:<26} {}  [{}]", p.name, p.title, p.target);
+        let wip = if p.wip { "  [WIP — not applied by default; use --only]" } else { "" };
+        println!("  {:<26} {}  [{}]{}", p.name, p.title, p.target, wip);
         if !p.summary.is_empty() {
             println!("  {:<26} {}", "", p.summary);
         }
@@ -178,9 +258,14 @@ fn select_patches<'a>(
     }
 
     let selected: Vec<&Patch> = if !only.is_empty() {
+        // Explicit opt-in: apply exactly what was named, including WIP patches.
         patches.iter().filter(|p| only.contains(&p.name)).collect()
     } else {
-        patches.iter().filter(|p| !skip.contains(&p.name)).collect()
+        // Default set: everything except --skip'd patches and work-in-progress ones.
+        patches
+            .iter()
+            .filter(|p| !p.wip && !skip.contains(&p.name))
+            .collect()
     };
 
     if selected.is_empty() {
