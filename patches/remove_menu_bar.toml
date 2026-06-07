@@ -1,0 +1,19 @@
+name = "remove_menu_bar"
+title = "Remove Menu Bar"
+summary = "Remove the non-functional Options menu bar (Fullscreen, FPS, ...) shown in windowed mode."
+doc = "docs/remove_menu_bar.md"
+
+# The main window's class is built by RegisterWindowClass (runblack, .text:0x007DBA00).
+# It assembles a WNDCLASSA on the stack and sets lpszMenuName (WNDCLASS+0x20) to the
+# "AppMenu" resource string at 0x00C311C8 -- the APPMENU menu (POPUP "&Options" with
+# Fullscreen / FPS / Dump Bitmap / Log Properties / Pause). CreateWindowExA is then called
+# with hMenu = NULL, so the visible menu bar comes entirely from the class menu name.
+# Setting lpszMenuName = NULL leaves the class with no menu, so the window has no menu bar.
+# (The APPACCEL accelerators and the menu resource itself are left in place but inert.)
+#   .text:007DBA44  mov dword ptr [esp+0x2C], offset aAppmenu  ; C7 44 24 2C C8 11 C3 00
+[[op]]
+kind = "replace"
+offset = 0x3DBA44
+expect = "C7 44 24 2C C8 11 C3 00"   # mov [esp+2C], 0x00C311C8  ("AppMenu", bw1-decomp 1129)
+bytes  = "C7 44 24 2C 00 00 00 00"   # mov [esp+2C], 0x00000000  (lpszMenuName = NULL)
+note = "Set WNDCLASS.lpszMenuName = NULL so the window class has no menu"
