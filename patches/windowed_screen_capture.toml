@@ -1,0 +1,67 @@
+name = "windowed_screen_capture"
+title = "Windowed Screen Capture"
+summary = "Fix save-game pictures (and snapshots) rendering solid pink in windowed mode by grabbing the back buffer instead of the emulated front buffer."
+doc = "docs/windowed_screen_capture.md"
+
+# The screen-grab routines (save-game pictures @ 0x00821750, named snapshots @
+# 0x00821370) Lock the FRONT buffer [0x00E85080]. Fullscreen: fine, it holds the
+# last flipped frame. Windowed on modern Windows: the primary is an emulated
+# surface whose lockable memory never sees the rendered frame (solid magenta),
+# so every thumbnail saves as pink. Both grabs run right after present and the
+# windowed Blt-present leaves the back buffer [0x00E85084] intact, so the back
+# buffer holds exactly the just-presented frame.
+#
+# A 21-byte cave returns front or back buffer depending on
+# LHScreen.windowed (0x00E850B4, LHScreen+0x64). Each `mov eax,[0xE85080]`
+# (A1 80 50 E8 00, 5 bytes) in the two grab routines becomes `call cave`
+# (also 5 bytes). See docs/windowed_screen_capture.md.
+#
+# Bytes are produced by scripts/windowed_screen_capture_asm.py (keystone).
+
+# 1) The code cave. `expect` is the zero pad, so the op aborts unless the
+#    region is genuinely empty (right exe, not already patched).
+[[op]]
+kind = "replace"
+offset = 0x4A8B80
+note = "windowed-aware grab surface select (21 bytes; cave vaddr 0x8A8B80)"
+bytes = '''
+  83 3D B4 50 E8 00 00 75 06 A1 80 50 E8 00 C3 A1 84 50 E8 00 C3
+'''
+expect = '''
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+'''
+
+[[op]]
+kind = "replace"
+offset = 0x4217A8
+note = "save-picture grab: Lock surface select (was: mov eax,[0xE85080])"
+expect = "A1 80 50 E8 00"
+bytes = "E8 D3 73 08 00"
+
+[[op]]
+kind = "replace"
+offset = 0x4217C2
+note = "save-picture grab: early-out Unlock surface select (was: mov eax,[0xE85080])"
+expect = "A1 80 50 E8 00"
+bytes = "E8 B9 73 08 00"
+
+[[op]]
+kind = "replace"
+offset = 0x421B53
+note = "save-picture grab: Unlock surface select (was: mov eax,[0xE85080])"
+expect = "A1 80 50 E8 00"
+bytes = "E8 28 70 08 00"
+
+[[op]]
+kind = "replace"
+offset = 0x4213AE
+note = "snapshot grab: Lock surface select (was: mov eax,[0xE85080])"
+expect = "A1 80 50 E8 00"
+bytes = "E8 CD 77 08 00"
+
+[[op]]
+kind = "replace"
+offset = 0x421712
+note = "snapshot grab: Unlock surface select (was: mov eax,[0xE85080])"
+expect = "A1 80 50 E8 00"
+bytes = "E8 69 74 08 00"
