@@ -44,6 +44,9 @@ bw1patch runblack.exe --dry-run
 
 # Patch the file in place (make a backup first!)
 bw1patch runblack.exe --in-place
+
+# Give the window/taskbar a Black & White icon (Windows only; see Window Icon below)
+bw1patch icon runblack.exe blackwhite.ico -o runblack-iconned.exe
 ```
 
 Before writing any byte, `bw1patch` verifies that the bytes it is about to overwrite
@@ -67,6 +70,8 @@ this with `--force` only if you know what you're doing.
 | [Widescreen Intro Logos](docs/widescreen_logos.md) | Stops the intro logo screens (Lionhead/EA stills, pre-intro video) stretching on widescreen displays. |
 | [Widescreen Cinematic Bars](docs/widescreen_cinema_bars.md) | Brings back the cinematic letterbox bars in cutscenes on widescreen displays. |
 | [Windowed Screen Capture](docs/windowed_screen_capture.md) | Fixes save-game pictures (and snapshots) saving as solid pink in windowed mode by grabbing the back buffer instead of the emulated front buffer. |
+| [Remove Menu Bar](docs/remove_menu_bar.md) | Removes the non-functional Options menu bar (Fullscreen, FPS, ...) shown on the windowed-mode window. |
+| [Remove Intel Logo](docs/remove_intel_logo.md) | Removes the Intel Pentium 4 badge the 3D logo/intro screen overlays bottom-left on some CPUs (CPUID-gated). |
 | [Max Resolution Fix](docs/max_resolution_fix.md) † | Allows resolutions above 2048px (1440p/4K). |
 
 † Not an executable patch and **not applied by `bw1patch`** — it's a separate runtime proxy DLL, documented here for completeness.
