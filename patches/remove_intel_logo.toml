@@ -1,0 +1,25 @@
+name = "remove_intel_logo"
+title = "Remove Intel Logo"
+summary = "Remove the Intel Pentium 4 badge overlaid in the bottom-left of the 3D logo/intro screen."
+doc = "docs/remove_intel_logo.md"
+
+# The particle-logo intro (render loop in runblack, entry .text:0x005F89F0) composites a
+# small badge in the bottom-left corner from data\Textures\p4.raw (material 0x004DBAAC) --
+# an Intel Pentium 4 logo, drawn as a drop-shadow + badge just before FinishFrame.
+#
+# It is gated by a CPUID check, which is why it shows on some machines and not others:
+# CPUID(1) base family ((eax>>8)&0xF) is turned into a tier code at [0x00FAC840], and the
+# dispatcher (.text:0x007ACA00) sets byte [0x00E83A30] = 1 only for base family 0x0F + SSE2
+# (Pentium 4 / NetBurst; some non-Intel CPUs also report base family 0x0F). The badge block
+# is drawn only when that byte is non-zero (mov al,[0x00E83A30] at .text:0x005F9BB8).
+#
+# The conditional jump at .text:0x005F9BBF (je 0x005F9DA2) skips the entire badge block when
+# the gate is false; forcing it unconditional means the badge is never drawn. The p4.raw
+# material is referenced nowhere else, so nothing else is affected.
+#   .text:005F9BBF  je 0x005F9DA2          ; 0F 84 DD 01 00 00
+[[op]]
+kind = "replace"
+offset = 0x1F9BBF
+expect = "0F 84 DD 01 00 00"   # je 0x005F9DA2                 (bw1-decomp 0631)
+bytes  = "E9 DE 01 00 00 90"   # jmp 0x005F9DA2 + nop  (always skip the P4 badge draw)
+note = "Force the Pentium 4 badge gate branch to always skip the draw"
