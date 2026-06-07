@@ -1,0 +1,36 @@
+name = "fix_swap_creature_shrink"
+title = "Fix SWAP_CREATURE Shrinking"
+summary = "Stop the creature shrinking each time the CHL SWAP_CREATURE script function runs (size-rounding bug)."
+doc = "docs/fix_swap_creature_shrink.md"
+wip = true   # work in progress: not applied by default; opt in with --only fix_swap_creature_shrink
+
+# The CHL script function SWAP_CREATURE -> GScript::SwapCreature (.text:0x006F48A0) calls the
+# swap worker at 0x0047BEE0, which rescales the creature's integer dimension array
+# (creature[+0x164] + 0x17D3C..0x17DE0, 41 entries) by the float ratio sizeB/sizeA.
+# Per entry it does:  fild (int dim) ; fmul st,st(1) (ratio) ; call __ftol ; mov [edi],eax
+# __ftol TRUNCATES toward zero, so each swap floors every dimension. Truncation is not
+# invertible (trunc(trunc(x*r)/r) <= x), so repeated swaps ratchet the size down -- spamming
+# swap shrinks the creature fast.
+#
+# Fix: convert via the FPU's default round-to-nearest instead of truncation. Replace the
+# `call __ftol` with `fistp dword [edi]` (stores the rounded int straight to the target;
+# edi already = the current element from `lea edi,[esi+eax]` at 0x0047C38A), and NOP the now
+# redundant `mov [edi],eax`. The following `fstp st(0)` still pops the ratio, so the x87 stack
+# stays balanced. (No fldcw in this routine; the default control word rounds to nearest --
+# which is also why the original code needed __ftol to force C truncation.)
+
+# .text:0x0047C39F  call __ftol            ; E8 5C 50 32 00  ->  fistp dword [edi] + nop*3
+[[op]]
+kind = "replace"
+offset = 0x7C39F
+expect = "E8 5C 50 32 00"      # call __ftol                       (bw1-decomp 0166)
+bytes  = "DB 1F 90 90 90"      # fistp dword [edi] ; nop ; nop ; nop  (round to nearest)
+note = "Round-to-nearest the rescaled dimension instead of truncating"
+
+# .text:0x0047C3B4  mov [edi], eax         ; 89 07  ->  nop ; nop  (fistp already stored it)
+[[op]]
+kind = "replace"
+offset = 0x7C3B4
+expect = "89 07"               # mov [edi], eax
+bytes  = "90 90"               # nop ; nop  (result already written by fistp; eax is stale)
+note = "Drop the redundant integer store now done by fistp"
