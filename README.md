@@ -72,6 +72,7 @@ this with `--force` only if you know what you're doing.
 | [Windowed Screen Capture](docs/windowed_screen_capture.md) | Fixes save-game pictures (and snapshots) saving as solid pink in windowed mode by grabbing the back buffer instead of the emulated front buffer. |
 | [Remove Menu Bar](docs/remove_menu_bar.md) | Removes the non-functional Options menu bar (Fullscreen, FPS, ...) shown on the windowed-mode window. |
 | [Remove Intel Logo](docs/remove_intel_logo.md) | Removes the Intel Pentium 4 badge the 3D logo/intro screen overlays bottom-left on some CPUs (CPUID-gated). |
+| [Throw Control](docs/throw_control.md) | Throws keep your fastest swing of the last moment instead of the release frame's speed, and throw strength can be scaled (`BWThrow.ini`). |
 | [Max Resolution Fix](docs/max_resolution_fix.md) † | Allows resolutions above 2048px (1440p/4K). |
 
 † Not an executable patch and **not applied by `bw1patch`** — it's a separate runtime proxy DLL, documented here for completeness.
